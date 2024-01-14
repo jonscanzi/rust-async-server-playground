@@ -46,12 +46,8 @@ impl LocalDbHandler {
     async fn update_elem(&mut self, elem: &String, new_value: String) {
         self.db.insert(UserKey { key: elem.clone() }, new_value);
     }
-    //async fn get_elem(&self, elem: String) -> Option<String> {
 
-    //   self.db.get(&elem).map(|x| *(*x))
-    // }
     async fn apply_to_all(&mut self, f: fn(String) -> String) {
-        //      self.db = self.db.into_iter().map(|(k, v)|(k, f(v))).collect();
         self.db = self
             .db
             .iter_mut()
@@ -120,7 +116,7 @@ async fn main() {
             limiter.wait().await;
             if let Err(err) = http1::Builder::new()
                 // `service_fn` converts our function in a `Service`
-                .serve_connection(io, service_fn(|req| hello(req, dbhh.clone())))
+                .serve_connection(io, service_fn(|req| process_users(req, dbhh.clone())))
                 .await
             {
                 println!("Error serving connection: {:?}", err);
@@ -129,12 +125,10 @@ async fn main() {
     }
 }
 
-async fn hello(
+async fn process_users(
     r: Request<hyper::body::Incoming>,
     dbh: Arc<Mutex<LocalDbHandler>>,
 ) -> Result<Response<Full<Bytes>>, Infallible> {
-    //let mut buf = vec![];
-    //let mut test = r.into_body().collect().await.unwrap().aggregate().reader();
     let test = r.into_body().collect().await.unwrap().to_bytes();
     let test = std::str::from_utf8(&test);
     match test {
